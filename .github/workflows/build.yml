@@ -1,0 +1,46 @@
+name: Build Geode Tools
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        build_type: [Release]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y cmake g++ make
+
+      - name: Install dependencies
+        if: runner.os == 'macOS'
+        run: brew install cmake
+
+      - name: Setup CMake
+        uses: lukka/get-cmake@v4
+
+      - name: Configure CMake
+        run: cmake -B build -S . -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+
+      - name: Build
+        run: cmake --build build --config ${{ matrix.build_type }}
+
+      - name: List artifacts
+        run: ls -R build
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: geode-tools-${{ matrix.os }}
+          path: |
+            build/${{ matrix.build_type }}/gpatch${{ runner.os == 'Windows' && '.exe' || '' }}
+            build/${{ matrix.build_type }}/setenv${{ runner.os == 'Windows' && '.exe' || '' }}
