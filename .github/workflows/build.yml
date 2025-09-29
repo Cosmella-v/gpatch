@@ -39,15 +39,22 @@ jobs:
 
       - name: Zip binaries
         run: |
-          cd build/${{ matrix.build_type }}
+          # Determine build folder
+          BUILD_DIR="build"
+          if [ -d "$BUILD_DIR/${{ matrix.build_type }}" ]; then
+            BUILD_DIR="$BUILD_DIR/${{ matrix.build_type }}"
+          fi
+
+          cd "$BUILD_DIR"
+
           if [ "${{ runner.os }}" == "Windows" ]; then
-            powershell Compress-Archive -Path * -DestinationPath ../../geode-tools-${{ matrix.os }}.zip
+            powershell Compress-Archive -Path * -DestinationPath ../../gpatch-${{ matrix.os }}.zip
           else
-            zip -r ../../geode-tools-${{ matrix.os }}.zip *
+            zip -r ../../gpatch-${{ matrix.os }}.zip *
           fi
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: geode-tools-${{ matrix.os }}
-          path: build/geode-tools-${{ matrix.os }}.zip
+          name: gpatch-ver_${{ matrix.os }}
+          path: build/gpatch-${{ matrix.os }}.zip
