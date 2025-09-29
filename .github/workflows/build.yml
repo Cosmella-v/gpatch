@@ -38,23 +38,30 @@ jobs:
         run: ls -R build
 
       - name: Zip binaries
+        shell: bash
         run: |
-          # Determine build folder
           BUILD_DIR="build"
           if [ -d "$BUILD_DIR/${{ matrix.build_type }}" ]; then
             BUILD_DIR="$BUILD_DIR/${{ matrix.build_type }}"
           fi
-
+          ZIP_FILE="gpatch-${{ matrix.os }}.zip"
           cd "$BUILD_DIR"
+          zip -r "../../$ZIP_FILE" *
 
-          if [ "${{ runner.os }}" == "Windows" ]; then
-            powershell Compress-Archive -Path * -DestinationPath ../../gpatch-${{ matrix.os }}.zip
-          else
-            zip -r ../../gpatch-${{ matrix.os }}.zip *
-          fi
+      - name: Zip binaries (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $BUILD_DIR = "build"
+          if (Test-Path "$BUILD_DIR\${{ matrix.build_type }}") {
+            $BUILD_DIR = "$BUILD_DIR\${{ matrix.build_type }}"
+          }
+          $ZIP_FILE = "gpatch-${{ matrix.os }}.zip"
+          Compress-Archive -Path "$BUILD_DIR\*" -DestinationPath "$ZIP_FILE"
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: gpatch-ver_${{ matrix.os }}
-          path: build/gpatch-${{ matrix.os }}.zip
+          name: gpatch-${{ matrix.os }}
+          path: |
+            gpatch-${{ matrix.os }}.zip
