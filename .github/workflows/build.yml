@@ -17,13 +17,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install dependencies
+      - name: Install dependencies (Linux)
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y cmake g++ make
+        run: sudo apt-get update && sudo apt-get install -y cmake g++ make zip
 
-      - name: Install dependencies
+      - name: Install dependencies (macOS)
         if: runner.os == 'macOS'
-        run: brew install cmake
+        run: brew install cmake zip
 
       - name: Setup CMake
         uses: lukka/get-cmake@latest
@@ -34,13 +34,20 @@ jobs:
       - name: Build
         run: cmake --build build --config ${{ matrix.build_type }}
 
-      - name: List artifacts
+      - name: List built files
         run: ls -R build
+
+      - name: Zip binaries
+        run: |
+          cd build/${{ matrix.build_type }}
+          if [ "${{ runner.os }}" == "Windows" ]; then
+            powershell Compress-Archive -Path * -DestinationPath ../../geode-tools-${{ matrix.os }}.zip
+          else
+            zip -r ../../geode-tools-${{ matrix.os }}.zip *
+          fi
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: geode-tools-${{ matrix.os }}
-          path: |
-            build/${{ matrix.build_type }}/gpatch${{ runner.os == 'Windows' && '.exe' || '' }}
-            build/${{ matrix.build_type }}/setenv${{ runner.os == 'Windows' && '.exe' || '' }}
+          path: build/geode-tools-${{ matrix.os }}.zip
